@@ -47,9 +47,9 @@ const routes = [
         meta: { requiresAuth: true },
       },
       {
-        path: 'gestion-llaves',
-        name: 'gestion-llaves',
-        component: () => import('pages/GestionLlavesPage.vue')
+        path: "gestion-llaves",
+        name: "gestion-llaves",
+        component: () => import("pages/GestionLlavesPage.vue"),
       },
 
       // RUTA COMÚN PARA LISTA DE CASOS - Accesible para todos los roles
@@ -72,6 +72,13 @@ const routes = [
         name: "lista-casos",
         component: () => import("pages/Docentes/ListaCasos.vue"),
         meta: { requiresAuth: true },
+      },
+      {
+        path: "docentes/caso-detalle/:id",
+        name: "docente-caso-detalle",
+        component: () => import("pages/Docentes/DetalleCaso.vue"),
+        meta: { requiresAuth: true },
+        props: true,
       },
       {
         path: "docentes/programar-examen",
@@ -127,13 +134,15 @@ const routes = [
       // RUTAS ACTUALIZADAS PARA REDIRECCIÓN
       {
         path: "evaluaciones-pendientes",
-        redirect: "/app/estudiantes/evaluaciones-pendientes"
+        redirect: "/app/estudiantes/evaluaciones-pendientes",
       },
       {
         path: "iniciar-evaluacion/:id",
-        redirect: to => {
-          return { path: `/app/estudiantes/iniciar-evaluacion/${to.params.id}` }
-        }
+        redirect: (to) => {
+          return {
+            path: `/app/estudiantes/iniciar-evaluacion/${to.params.id}`,
+          };
+        },
       },
 
       // ADMINISTRACIÓN - NUEVAS RUTAS

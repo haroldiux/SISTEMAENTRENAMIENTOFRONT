@@ -99,8 +99,6 @@
             <q-card-actions :class="{ 'col-auto': tipoVista === 'list' }"
               :align="tipoVista === 'grid' ? 'right' : undefined" class="q-pa-md">
               <template v-if="tipoUsuario === 'DOCENTE' || tipoUsuario === 'ADMINISTRADOR'">
-                <q-btn icon="edit" color="primary" round flat @click="editarCaso(caso.id)" />
-                <q-btn icon="delete" color="negative" round flat @click="eliminarCaso(caso.id)" />
               </template>
               <template v-else-if="tipoUsuario === 'ESTUDIANTE'">
                 <q-btn label="Entrenar" color="primary" class="q-px-md" unelevated @click="entrenarConCaso(caso.id)" />

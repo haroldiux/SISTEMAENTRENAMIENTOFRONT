@@ -991,26 +991,31 @@ function extraerID(campo) {
 
 // Determinar si hay tratamientos disponibles para este caso
 const tieneTratamientosDisponibles = computed(() => {
-  // 1. Verificar si el caso tiene tratamientos definidos
-  if (caso.casoTratamientos && caso.casoTratamientos.length > 0) {
-    console.log("Tiene tratamientos en caso.casoTratamientos");
-    return true;
-  }
+  // 1. Verificar si hay opciones de tratamientos disponibles
+  const hayOpciones = opcionesTratamientos.medicos.length > 0;
 
-  // 2. Verificar si hay tratamientos correctos en res.tratamientos
-  if (Array.isArray(res.tratamientos) && res.tratamientos.some(t => t.respuestaCorrecta === 1)) {
-    console.log("Tiene tratamientos correctos en res.tratamientos");
-    return true;
-  }
+  // 2. Verificar si el caso tiene tratamientos definidos
+  const hayTratamientosCaso = caso.casoTratamientos?.length > 0;
 
-  // 3. Verificar si tenemos datos de tratamientos en el objeto de caso
-  if (caso.tratamientos_correctos && caso.tratamientos_correctos.length > 0) {
-    console.log("Tiene tratamientos en caso.tratamientos_correctos");
-    return true;
-  }
+  // 3. Verificar si hay tratamientos correctos
+  const hayTratamientosCorrectos = caso.tratamientos_correctos?.length > 0;
 
-  console.log("No se encontraron tratamientos disponibles");
-  return false;
+  // 4. Verificar si hay tratamientos en res
+  const hayTratamientosRes = Array.isArray(res.tratamientos) && res.tratamientos.length > 0;
+
+  console.log("Verificación de tratamientos:", {
+    hayOpciones,
+    hayTratamientosCaso,
+    hayTratamientosCorrectos,
+    hayTratamientosRes,
+    opcionesMedicos: opcionesTratamientos.medicos,
+    casoTratamientos: caso.casoTratamientos,
+    tratamientosCorrectos: caso.tratamientos_correctos,
+    resTratamientos: res.tratamientos
+  });
+
+  // Retornar true si hay opciones Y al menos una de las otras condiciones es verdadera
+  return hayOpciones && (hayTratamientosCaso || hayTratamientosCorrectos || hayTratamientosRes);
 });
 
 // Añadir esta función a la sección de tus funciones "preparar... ParaEnvio"
@@ -1234,12 +1239,48 @@ async function cargarCaso() {
     console.log("Opciones de tratamientos:", data.opciones_tratamientos);
     Object.assign(caso, data.caso);
 
-    res.tratamientos = [];
-    // Tomar también las listas completas de opciones
-    opcionesTratamientos.medicos = data.opciones_tratamientos?.medicamentos || [];
-    opcionesTratamientos.dosis = data.opciones_tratamientos?.dosis || [];
-    opcionesTratamientos.frecuencias = data.opciones_tratamientos?.frecuencias || [];
-    opcionesTratamientos.duraciones = data.opciones_tratamientos?.duraciones || [];
+    // Asignar tratamientos al modelo reactivo para que se muestren y se califiquen
+    if (data.caso.casoTratamientos && Array.isArray(data.caso.casoTratamientos)) {
+      res.tratamientos = data.caso.casoTratamientos.map(t => ({
+        medicamento: t.medicamento || null,
+        dosis: t.dosis || null,
+        frecuencia: t.frecuencia || null,
+        duracion: t.duracion || null,
+        estados: { medicamento: null, dosis: null, frecuencia: null, duracion: null }
+      }));
+    } else if (data.caso.tratamientos_correctos && Array.isArray(data.caso.tratamientos_correctos)) {
+      res.tratamientos = data.caso.tratamientos_correctos.map(t => ({
+        medicamento: t.medicamento || null,
+        dosis: t.dosis || null,
+        frecuencia: t.frecuencia || null,
+        duracion: t.duracion || null,
+        estados: { medicamento: null, dosis: null, frecuencia: null, duracion: null }
+      }));
+    } else {
+      // Inicializar con al menos un tratamiento vacío
+      res.tratamientos = [{
+        medicamento: null,
+        dosis: null,
+        frecuencia: null,
+        duracion: null,
+        estados: { medicamento: null, dosis: null, frecuencia: null, duracion: null }
+      }];
+    }
+
+    // Asegurar que las opciones de tratamientos estén disponibles
+    if (data.opciones_tratamientos) {
+      opcionesTratamientos.medicos = data.opciones_tratamientos.medicamentos || [];
+      opcionesTratamientos.dosis = data.opciones_tratamientos.dosis || [];
+      opcionesTratamientos.frecuencias = data.opciones_tratamientos.frecuencias || [];
+      opcionesTratamientos.duraciones = data.opciones_tratamientos.duraciones || [];
+
+      console.log("Opciones de tratamientos cargadas:", {
+        medicamentos: opcionesTratamientos.medicos.length,
+        dosis: opcionesTratamientos.dosis.length,
+        frecuencias: opcionesTratamientos.frecuencias.length,
+        duraciones: opcionesTratamientos.duraciones.length
+      });
+    }
 
     // Verificación explícita de existencia de tratamientos
     console.log("Verificando tratamientos:", {
@@ -1652,76 +1693,47 @@ function volverAIndice() {
   }
 }
 
-// Función para destacar visualmente las secciones según su puntuación
 function destacarSeccionesPorPuntuacion(puntuacion) {
-  // Destacar la sección de motivos
-  const seccionMotivos = document.querySelector(
-    ".form-section-card:nth-of-type(1)"
-  );
-  if (seccionMotivos) {
-    if (puntuacion.detalle.motivos.porcentaje >= 70) {
-      seccionMotivos.style.borderLeft = "5px solid #4caf50";
-      seccionMotivos.style.boxShadow = "0 4px 8px rgba(76, 175, 80, 0.2)";
-    } else if (puntuacion.detalle.motivos.porcentaje >= 40) {
-      seccionMotivos.style.borderLeft = "5px solid #ff9800";
-      seccionMotivos.style.boxShadow = "0 4px 8px rgba(255, 152, 0, 0.2)";
+  // Función auxiliar para aplicar estilos según porcentaje
+  const aplicarEstilos = (elemento, porcentaje) => {
+    if (!elemento) return;
+
+    if (porcentaje >= 70) {
+      elemento.style.borderLeft = "5px solid #4caf50";
+      elemento.style.boxShadow = "0 4px 8px rgba(76, 175, 80, 0.2)";
+    } else if (porcentaje >= 40) {
+      elemento.style.borderLeft = "5px solid #ff9800";
+      elemento.style.boxShadow = "0 4px 8px rgba(255, 152, 0, 0.2)";
     } else {
-      seccionMotivos.style.borderLeft = "5px solid #f44336";
-      seccionMotivos.style.boxShadow = "0 4px 8px rgba(244, 67, 54, 0.2)";
+      elemento.style.borderLeft = "5px solid #f44336";
+      elemento.style.boxShadow = "0 4px 8px rgba(244, 67, 54, 0.2)";
     }
-  }
+  };
+
+  // Destacar la sección de motivos
+  const seccionMotivos = document.querySelector(".form-section-card:nth-of-type(1)");
+  aplicarEstilos(seccionMotivos, puntuacion.detalle.motivos.porcentaje);
 
   // Destacar la sección de signos
-  const seccionSignos = document.querySelector(
-    ".form-section-card:nth-of-type(2)"
-  );
-  if (seccionSignos) {
-    if (puntuacion.detalle.elementos_clinicos.porcentaje >= 70) {
-      seccionSignos.style.borderLeft = "5px solid #4caf50";
-      seccionSignos.style.boxShadow = "0 4px 8px rgba(76, 175, 80, 0.2)";
-    } else if (puntuacion.detalle.elementos_clinicos.porcentaje >= 40) {
-      seccionSignos.style.borderLeft = "5px solid #ff9800";
-      seccionSignos.style.boxShadow = "0 4px 8px rgba(255, 152, 0, 0.2)";
-    } else {
-      seccionSignos.style.borderLeft = "5px solid #f44336";
-      seccionSignos.style.boxShadow = "0 4px 8px rgba(244, 67, 54, 0.2)";
-    }
-  }
+  const seccionSignos = document.querySelector(".form-section-card:nth-of-type(2)");
+  aplicarEstilos(seccionSignos, puntuacion.detalle.elementos_clinicos.porcentaje);
 
   // Destacar la sección de exámenes
-  const seccionExamenes = document.querySelector(
-    ".form-section-card:nth-of-type(5)"
-  );
-  if (seccionExamenes) {
-    if (puntuacion.detalle.examenes.porcentaje >= 70) {
-      seccionExamenes.style.borderLeft = "5px solid #4caf50";
-      seccionExamenes.style.boxShadow = "0 4px 8px rgba(76, 175, 80, 0.2)";
-    } else if (puntuacion.detalle.examenes.porcentaje >= 40) {
-      seccionExamenes.style.borderLeft = "5px solid #ff9800";
-      seccionExamenes.style.boxShadow = "0 4px 8px rgba(255, 152, 0, 0.2)";
-    } else {
-      seccionExamenes.style.borderLeft = "5px solid #f44336";
-      seccionExamenes.style.boxShadow = "0 4px 8px rgba(244, 67, 54, 0.2)";
-    }
-  }
+  const seccionExamenes = document.querySelector(".form-section-card:nth-of-type(5)");
+  aplicarEstilos(seccionExamenes, puntuacion.detalle.examenes.porcentaje);
 
   // Destacar la sección de tratamientos
-  const seccionTratamientos = document.querySelector(
-    ".form-section-card:has(.text-subtitle1:contains('TRATAMIENTO'))"
-  );
-  if (seccionTratamientos) {
-    if (puntuacion.detalle.tratamientos?.porcentaje >= 70) {
-      seccionTratamientos.style.borderLeft = "5px solid #4caf50";
-      seccionTratamientos.style.boxShadow = "0 4px 8px rgba(76, 175, 80, 0.2)";
-    } else if (puntuacion.detalle.tratamientos?.porcentaje >= 40) {
-      seccionTratamientos.style.borderLeft = "5px solid #ff9800";
-      seccionTratamientos.style.boxShadow = "0 4px 8px rgba(255, 152, 0, 0.2)";
-    } else {
-      seccionTratamientos.style.borderLeft = "5px solid #f44336";
-      seccionTratamientos.style.boxShadow = "0 4px 8px rgba(244, 67, 54, 0.2)";
-    }
-  }
+  // Buscar la sección de tratamientos por su título
+  const secciones = Array.from(document.querySelectorAll(".form-section-card"));
+  const seccionTratamientos = secciones.find(seccion => {
+    const titulo = seccion.querySelector(".text-subtitle1");
+    return titulo && titulo.textContent.trim().toUpperCase() === "TRATAMIENTO";
+  });
 
+  // Aplicar estilos a la sección de tratamientos si existe y hay puntuación
+  if (seccionTratamientos && puntuacion.detalle.tratamientos?.porcentaje !== undefined) {
+    aplicarEstilos(seccionTratamientos, puntuacion.detalle.tratamientos.porcentaje);
+  }
 }
 
 // Función para preparar los motivos para enviar al backend

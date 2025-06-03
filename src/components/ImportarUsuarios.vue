@@ -169,13 +169,20 @@ export default {
         filePreview.value = []
         previewColumns.value = []
 
+        // Asegúrate de que file.name exista y sea un archivo válido
+        console.log("Archivo seleccionado:", file.name, file.type, file.size);
+
         // Generar vista previa del archivo
         const formData = new FormData()
-        formData.append('file', file)
+        formData.append('file', file, file.name)
         formData.append('tipo', tipo)
 
         // Enviar archivo para vista previa
-        const response = await api.post('/importar-usuarios/preview', formData)
+        const response = await api.post('/importar-usuarios/preview', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
 
         if (response.data.success) {
           // Establecer columnas para la tabla de vista previa
@@ -215,12 +222,37 @@ export default {
           }
         }
       } catch (error) {
-        console.error('Error al generar vista previa:', error)
-        $q.notify({
-          color: 'negative',
-          message: 'Error al procesar el archivo. Verifica que sea un archivo Excel válido.',
-          icon: 'error'
-        })
+        console.error('Error al generar vista previa:', error);
+
+        // Mostrar detalles específicos de los errores de validación
+        if (error.response && error.response.data) {
+          if (error.response.data.errors) {
+            // Mostrar cada error de validación
+            const errores = Object.values(error.response.data.errors).flat();
+            errores.forEach(err => {
+              $q.notify({
+                color: 'negative',
+                message: err,
+                icon: 'error',
+                timeout: 5000
+              });
+            });
+          } else if (error.response.data.message) {
+            // Mostrar mensaje de error del servidor
+            $q.notify({
+              color: 'negative',
+              message: error.response.data.message,
+              icon: 'error',
+              timeout: 5000
+            });
+          }
+        } else {
+          $q.notify({
+            color: 'negative',
+            message: 'Error al procesar el archivo. Verifica que sea un archivo Excel válido.',
+            icon: 'error'
+          });
+        }
 
         // Limpiar el archivo seleccionado
         if (tipo === 'estudiantes') {
@@ -246,12 +278,20 @@ export default {
         const file = tipo === 'estudiantes' ? estudiantesFile.value : docentesFile.value
         if (!file) return
 
+        // Asegúrate de que el archivo sea tratado como un File object
+        console.log("Importando archivo:", file.name, file.type, file.size);
+
         const formData = new FormData()
-        formData.append('file', file)
+        formData.append('file', file, file.name)
         formData.append('tipo', tipo)
 
         // Enviar archivo para importación
-        const response = await api.post('/importar-usuarios/import', formData)
+        // Enviar archivo para importación con Content-Type adecuado
+        const response = await api.post('/importar-usuarios/import', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        })
 
         if (response.data.success) {
           $q.notify({

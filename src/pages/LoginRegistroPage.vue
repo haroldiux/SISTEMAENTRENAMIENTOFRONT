@@ -32,12 +32,14 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Notify } from 'quasar'
 import { api } from 'boot/axios'
+import { useAuthStore } from 'src/stores/auth'
 
 const router = useRouter()
 const user = ref('')
 const password = ref('')
 const loading = ref(false)
 const showPassword = ref(false)
+const authStore = useAuthStore()
 
 function login() {
   loading.value = true
@@ -69,6 +71,9 @@ function login() {
         loading.value = false
         return
       }
+
+      authStore.setToken(data.token)
+      authStore.setUser(data.user)
 
       localStorage.setItem('token', data.token)
       localStorage.setItem('user', JSON.stringify(data.user))
@@ -107,6 +112,7 @@ function login() {
       loading.value = false
     })
 }
+
 </script>
 
 <style scoped>
