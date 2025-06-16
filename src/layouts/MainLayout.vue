@@ -26,7 +26,7 @@
 
         <!-- Lista de Casos - Visible para todos los roles -->
         <q-item :to="rol === 'ESTUDIANTE' ? '/app/estudiantes/lista-casos' : '/app/docentes/lista-casos'"
-               active-class="bg-white text-primary">
+          active-class="bg-white text-primary">
           <q-item-section avatar>
             <q-icon name="list_alt" />
           </q-item-section>
@@ -102,12 +102,20 @@
               <q-item-section>Programar Evaluación</q-item-section>
             </q-item>
 
-            <!-- Nuevo elemento para ver evaluaciones creadas -->
+            <!-- Elemento para ver evaluaciones creadas -->
             <q-item clickable to="/app/docentes/mis-evaluaciones" active-class="bg-white text-primary">
               <q-item-section avatar>
                 <q-icon name="assessment" />
               </q-item-section>
               <q-item-section>Mis Evaluaciones</q-item-section>
+            </q-item>
+
+            <!-- Nuevo elemento para Mis Grupos -->
+            <q-item clickable to="/app/docentes/mis-grupos" active-class="bg-white text-primary">
+              <q-item-section avatar>
+                <q-icon name="groups" />
+              </q-item-section>
+              <q-item-section>Mis Grupos</q-item-section>
             </q-item>
           </q-expansion-item>
         </template>

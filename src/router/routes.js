@@ -93,6 +93,13 @@ const routes = [
         component: () => import("pages/Docentes/MisEvaluaciones.vue"),
         meta: { requiresAuth: true, requiresDocente: true },
       },
+      // NUEVA RUTA PARA VER GRUPOS DEL DOCENTE
+      {
+        path: "docentes/mis-grupos",
+        name: "mis-grupos",
+        component: () => import("pages/Docentes/MisGrupos.vue"),
+        meta: { requiresAuth: true, requiresDocente: true },
+      },
       // NUEVA RUTA PARA VER DETALLES DE UNA EVALUACIÓN
       {
         path: "docentes/detalle-evaluacion/:id",
