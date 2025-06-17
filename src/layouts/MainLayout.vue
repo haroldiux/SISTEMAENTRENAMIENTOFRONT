@@ -118,6 +118,23 @@
               <q-item-section>Mis Grupos</q-item-section>
             </q-item>
           </q-expansion-item>
+          <!-- Nuevos elementos para reportes -->
+          <q-separator class="q-my-sm" color="white" />
+
+          <q-expansion-item expand-separator icon="assessment" label="Reportes" header-class="text-white">
+            <q-item clickable to="/app/admin/reporte-usuarios" active-class="bg-white text-primary">
+              <q-item-section avatar>
+                <q-icon name="people" />
+              </q-item-section>
+              <q-item-section>Usuarios del Sistema</q-item-section>
+            </q-item>
+            <q-item clickable to="/app/admin/reporte-actividad" active-class="bg-white text-primary">
+              <q-item-section avatar>
+                <q-icon name="timeline" />
+              </q-item-section>
+              <q-item-section>Actividad del Sistema</q-item-section>
+            </q-item>
+          </q-expansion-item>
         </template>
       </q-list>
     </q-drawer>

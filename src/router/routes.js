@@ -178,6 +178,19 @@ const routes = [
         component: () => import("pages/Admin/ImportarUsuarios.vue"),
         meta: { requiresAuth: true, requiresAdmin: true },
       },
+      // Reportes (solo para administradores)
+      {
+        path: "admin/reporte-usuarios",
+        name: "admin-reporte-usuarios",
+        component: () => import("pages/Admin/ReporteUsuarios.vue"),
+        meta: { requiresAuth: true, requiresAdmin: true },
+      },
+      {
+        path: "admin/reporte-actividad",
+        name: "admin-reporte-actividad",
+        component: () => import("pages/Admin/ReporteActividadSistema.vue"),
+        meta: { requiresAuth: true, requiresAdmin: true },
+      },
     ],
   },
 
